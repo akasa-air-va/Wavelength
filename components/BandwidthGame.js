@@ -193,8 +193,8 @@ const nextRound = async () => {
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-64 h-64 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-96 h-96 bg-yellow-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-2000"></div>
-        <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-4000"></div>
+        <div className="absolute top-40 right-20 w-96 h-96 bg-yellow-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-2000"></div>
+        <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-4000"></div>
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto">
@@ -205,7 +205,7 @@ const nextRound = async () => {
               <div className="inline-block animate-bounce">
                 <Gamepad2 size={80} className="text-yellow-300 drop-shadow-glow" />
               </div>
-              <h1 className="text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 drop-shadow-lg animate-gradient bg-[length:200%_200%]">
+              <h1 className="text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 drop-shadow-lg animate-gradient">
                 BANDWIDTH
               </h1>
               <p className="text-xl text-purple-200 tracking-wide">The Ultimate Spectrum Guessing Game</p>
@@ -599,11 +599,40 @@ const nextRound = async () => {
       </div>
 
       <style jsx>{`
-        .delay-2000 {
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes gradient {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
+        }
+
+        .animate-gradient {
+          background-size: 200% 200%;
+          animation: gradient 3s ease infinite;
+        }
+
+        .animation-delay-2000 {
           animation-delay: 2s;
         }
 
-        .delay-4000 {
+        .animation-delay-4000 {
           animation-delay: 4s;
         }
 
