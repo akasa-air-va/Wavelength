@@ -1,3 +1,4 @@
+import './globals.css'
 export const metadata = {
   title: 'Bandwidth Game',
   description: 'Multiplayer Bandwidth guessing game'

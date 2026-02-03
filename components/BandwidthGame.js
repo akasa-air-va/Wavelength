@@ -5,6 +5,7 @@ import {
   Gamepad2, Users, Trophy, Sparkles, Zap,
   Target, Lock, ArrowRight
 } from 'lucide-react';
+import storage from "../utils/storage";
 
 /* =======================
    TOPICS
@@ -52,25 +53,24 @@ export default function BandwidthGame() {
   ======================= */
 
   useEffect(() => {
-    if (!roomCode || !myPlayerId) return;
+  if (!roomCode || !myPlayerId) return;
 
-    const interval = setInterval(async () => {
-      try {
-        const result = await window.storage.get(`game:${roomCode}`, true);
-        if (!result) return;
+  const channel = storage.subscribe(payload => {
+    if (payload.new?.key !== `game:${roomCode}`) return;
 
-        const game = JSON.parse(result.value);
-        setGameState(game);
+    const game = JSON.parse(payload.new.value);
+    setGameState(game);
 
-        if (game.phase === 'lobby') setScreen('lobby');
-        if (game.phase === 'playing') setScreen('game');
-        if (game.phase === 'results') setScreen('results');
+    if (game.phase === "lobby") setScreen("lobby");
+    if (game.phase === "playing") setScreen("game");
+    if (game.phase === "results") setScreen("results");
+  });
 
-      } catch {}
-    }, 1000);
+  return () => {
+    channel.unsubscribe();
+  };
+}, [roomCode, myPlayerId]);
 
-    return () => clearInterval(interval);
-  }, [roomCode, myPlayerId]);
 
   /* =======================
      CREATE ROOM
@@ -78,31 +78,34 @@ export default function BandwidthGame() {
 
   const createRoom = async () => {
 
-    if (!playerName.trim()) return alert("Enter name!");
+  if (!playerName.trim()) return alert("Enter name!");
 
-    const code = generateRoomCode();
-    const id = `player_${Date.now()}_${Math.random()}`;
+  const code = generateRoomCode();
+  const id = `player_${Date.now()}_${Math.random()}`;
 
-    const newGame = {
-      roomCode: code,
-      host: id,
-      players: [{ id, name: playerName.trim(), score: 0 }],
-      phase: 'lobby',
-      currentRound: 0,
-      psychicIndex: 0,
-      topic: null,
-      target: null,
-      guesses: [],
-      customTopic: null
-    };
-
-    await window.storage.set(`game:${code}`, JSON.stringify(newGame), true);
-
-    setRoomCode(code);
-    setMyPlayerId(id);
-    setGameState(newGame);
-    setScreen('lobby');
+  const newGame = {
+    roomCode: code,
+    host: id,
+    players: [{ id, name: playerName.trim(), score: 0 }],
+    phase: 'lobby',
+    currentRound: 0,
+    psychicIndex: 0,
+    topic: null,
+    target: null,
+    guesses: [],
+    customTopic: null
   };
+
+  // Save to Supabase
+  await storage.set(`game:${code}`, JSON.stringify(newGame));
+
+  // Update local state
+  setRoomCode(code);
+  setMyPlayerId(id);
+  setGameState(newGame);
+  setScreen('lobby');
+};
+
 
   /* =======================
      JOIN ROOM
@@ -110,30 +113,31 @@ export default function BandwidthGame() {
 
   const joinRoom = async () => {
 
-    if (!playerName.trim() || !roomCode.trim())
-      return alert("Fill all fields!");
+  if (!playerName.trim() || !roomCode.trim())
+    return alert("Fill all fields!");
 
-    const code = roomCode.toUpperCase();
+  const code = roomCode.toUpperCase();
 
-    const result = await window.storage.get(`game:${code}`, true);
-    if (!result) return alert("Room not found!");
+  const result = await storage.get(`game:${code}`);
+  if (!result) return alert("Room not found!");
 
-    const game = JSON.parse(result.value);
+  const game = JSON.parse(result.value);
 
-    if (game.players.some(p => p.name === playerName.trim()))
-      return alert("Name taken!");
+  if (game.players.some(p => p.name === playerName.trim()))
+    return alert("Name taken!");
 
-    const id = `player_${Date.now()}_${Math.random()}`;
+  const id = `player_${Date.now()}_${Math.random()}`;
 
-    game.players.push({ id, name: playerName.trim(), score: 0 });
+  game.players.push({ id, name: playerName.trim(), score: 0 });
 
-    await window.storage.set(`game:${code}`, JSON.stringify(game), true);
+  await storage.set(`game:${code}`, JSON.stringify(game));
 
-    setRoomCode(code);
-    setMyPlayerId(id);
-    setGameState(game);
-    setScreen('lobby');
-  };
+  setRoomCode(code);
+  setMyPlayerId(id);
+  setGameState(game);
+  setScreen('lobby');
+};
+
 
   /* =======================
      START ROUND
@@ -161,8 +165,10 @@ export default function BandwidthGame() {
       customTopic: null
     };
 
-    await window.storage.set(`game:${roomCode}`, JSON.stringify(updated), true);
+    await storage.set(`game:${roomCode}`, JSON.stringify(updated));
     setGameState(updated);
+
+
   };
 
   /* =======================
@@ -211,8 +217,9 @@ export default function BandwidthGame() {
         (gameState.psychicIndex + 1) % gameState.players.length;
     }
 
-    await window.storage.set(`game:${roomCode}`, JSON.stringify(updatedGame), true);
+    await storage.set(`game:${roomCode}`, JSON.stringify(updatedGame), true);
     setGameState(updatedGame);
+
   };
 
   /* =======================
@@ -231,8 +238,11 @@ export default function BandwidthGame() {
       guesses: []
     };
 
-    await window.storage.set(`game:${roomCode}`, JSON.stringify(updated), true);
+    await storage.set(`game:${roomCode}`, JSON.stringify(updated), true);
     setGameState(updated);
+
+    await saveGame(updatedGame);
+
   };
 
   /* =======================
@@ -254,11 +264,12 @@ export default function BandwidthGame() {
       }
     };
 
-    await window.storage.set(`game:${roomCode}`, JSON.stringify(updated), true);
+    await storage.set(`game:${roomCode}`, JSON.stringify(updated), true);
     setGameState(updated);
 
     setCustomLeft('');
     setCustomRight('');
+
   };
 
   /* =======================
@@ -273,6 +284,7 @@ export default function BandwidthGame() {
 
   const hasGuessed =
     gameState?.guesses?.some(g => g.playerId === myPlayerId);
+
 
   /* =======================
      UI
