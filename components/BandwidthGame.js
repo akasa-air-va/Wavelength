@@ -172,16 +172,21 @@ export default function BandwidthGame() {
     setGameState(updatedGame);
   };
 
-  const nextRound = async () => {
-    if (myPlayerId !== gameState.host) return;
+const nextRound = async () => {
+  if (myPlayerId !== gameState.host) return;
 
-    const updatedGame = {
-      ...gameState,
-      phase: 'lobby',
-      topic: null,
-      target: null,
-      guesses: []
-    }; 
+  const updatedGame = {
+    ...gameState,
+    phase: 'lobby',
+    topic: null,
+    target: null,
+    guesses: []
+  };
+
+  await storage.set(`game:${roomCode}`, updatedGame);
+  setGameState(updatedGame);
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 text-white font-mono p-4 overflow-hidden relative">
@@ -629,5 +634,4 @@ export default function BandwidthGame() {
       `}</style>
     </div>
   );
-}
 }
